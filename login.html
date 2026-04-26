@@ -1,34 +1,53 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Login</title>
-  <style>
-    body {background:#0f172a; color:white; text-align:center; font-family:Arial;}
-    input,button {padding:10px; margin:10px; border-radius:8px;}
-    button {background:#22c55e; color:white;}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div class="container" style="margin-top: 50px;">
+        <div class="header">
+            <h1>Create Account</h1>
+        </div>
+        <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" id="name" placeholder="Enter your name">
+        </div>
+        <div class="form-group">
+            <label>Username</label>
+            <input type="text" id="username" placeholder="Choose a username">
+        </div>
+        <button class="btn" onclick="register()">Register</button>
+        <p style="text-align: center; margin-top: 20px;">
+            <a href="index.html" style="color: var(--primary);">Already have an account? Login</a>
+        </p>
+    </div>
 
-<h2>Login</h2>
+    <script src="app.js"></script>
+    <script>
+        function register() {
+            const name = document.getElementById('name').value.trim();
+            const username = document.getElementById('username').value.trim();
+            
+            if(!name || !username) return alert("Fill all fields");
 
-<input id="user" placeholder="Username"><br>
-<button onclick="login()">Login</button>
+            let users = getUsers();
+            if(users.find(u => u.username === username)) {
+                return alert("Username already exists!");
+            }
 
-<p>No account? <a href="index.html" style="color:lightblue;">Register</a></p>
-
-<script>
-function login(){
-  let user=document.getElementById("user").value;
-
-  if(localStorage.getItem(user)){
-    localStorage.setItem("currentUser", user);
-    window.location="dashboard.html";
-  } else {
-    alert("User not found");
-  }
-}
-</script>
-
+            users.push({
+                name, username, balance: 0, upiId: "",
+                planRequested: false, planUtr: "", isVerified: false,
+                withdrawRequested: false, withdrawAmount: 0
+            });
+            
+            saveUsers(users);
+            alert("Registration successful!");
+            window.location.href = 'login.html';
+        }
+    </script>
 </body>
 </html>
