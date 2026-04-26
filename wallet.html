@@ -1,31 +1,42 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Wallet</title>
-  <style>
-    body {background:#0f172a; color:white; text-align:center;}
-    input,button {padding:10px; margin:10px;}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wallet</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div class="container">
+        <div class="header">
+            <h2>Wallet Details</h2>
+        </div>
+        <div class="form-group">
+            <label>Your UPI ID for Withdrawal</label>
+            <input type="text" id="upiInput" placeholder="example@upi">
+        </div>
+        <button class="btn" onclick="saveUpi()">Save UPI ID</button>
+    </div>
 
-<h2>Wallet</h2>
-<input id="upi" placeholder="Enter UPI"><br>
-<button onclick="saveUPI()">Save</button><br><br>
-<button onclick="back()">Back</button>
+    <div class="bottom-nav">
+        <a href="dashboard.html">Dash</a>
+        <a href="wallet.html" class="active">Wallet</a>
+        <a href="balance.html">Withdraw</a>
+        <a href="profile.html">Profile</a>
+    </div>
 
-<script>
-let user=localStorage.getItem("currentUser");
-let data=JSON.parse(localStorage.getItem(user));
+    <script src="app.js"></script>
+    <script>
+        requireAuth();
+        let user = getCurrentUser();
+        document.getElementById('upiInput').value = user.upiId;
 
-function saveUPI(){
-  data.upi=document.getElementById("upi").value;
-  localStorage.setItem(user, JSON.stringify(data));
-  alert("Saved");
-}
-
-function back(){ window.location="dashboard.html"; }
-</script>
-
+        function saveUpi() {
+            const upi = document.getElementById('upiInput').value.trim();
+            user.upiId = upi;
+            updateCurrentUser(user);
+            alert("UPI ID updated successfully!");
+        }
+    </script>
 </body>
 </html>
