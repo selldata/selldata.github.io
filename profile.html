@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Profile</title>
+  <style>
+    body {background:#0f172a; color:white; text-align:center;}
+    input,button {padding:10px; margin:10px;}
+  </style>
+</head>
+<body>
+
+<h2>Profile</h2>
+<input id="name" placeholder="New Name"><br>
+<button onclick="save()">Update</button><br><br>
+<button onclick="back()">Back</button>
+
+<script>
+let user=localStorage.getItem("currentUser");
+let data=JSON.parse(localStorage.getItem(user));
+
+function save(){
+  data.name=document.getElementById("name").value;
+  localStorage.setItem(user, JSON.stringify(data));
+  alert("Updated");
+}
+
+function back(){ window.location="dashboard.html"; }
+</script>
+
+</body>
+</html>
