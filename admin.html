@@ -78,14 +78,14 @@
                         <p><strong>Amount:</strong> ₹${u.withdrawAmount}</p>
                         <p><strong>UPI ID:</strong> ${u.upiId}</p>
                         <div class="action-btns">
-                            <button class="btn btn-success" onclick="approveWithdraw('${u.username}')">Approve Withdraw</button>
-                            <button class="btn btn-danger" onclick="rejectWithdraw('${u.username}')">Reject Withdraw</button>
+                            <button class="btn btn-success" onclick="approveWithdraw('${u.username}')">Approve & Pay</button>
+                            <button class="btn btn-danger" onclick="rejectWithdraw('${u.username}')">Reject & Refund</button>
                         </div>`;
                 } else if (currentTab === 'completed') {
                     html += `
                         <p><strong>Plan Status:</strong> ${u.isVerified ? '<span style="color:var(--success)">Verified ✅</span>' : '<span style="color:var(--danger)">Not Active ❌</span>'}</p>
                         <div class="action-btns">
-                            <button class="btn btn-warning" onclick="refund('${u.username}')">Refund +₹299</button>
+                            <button class="btn btn-warning" onclick="refund('${u.username}')">Add ₹299 (Plan Refund)</button>
                         </div>`;
                 }
 
@@ -104,16 +104,15 @@
             if(confirm("Reject this plan?")) updateUserProp(username, { planRequested: false, planUtr: "" });
         }
 
-        // UPDATED: Approve Withdraw (Update History)
+        // UPDATED: Approve Withdraw (Marks History as Completed)
         function approveWithdraw(username) {
-            if(confirm("Mark withdrawal as paid?")) {
+            if(confirm("Confirm payment is sent to user?")) {
                 let users = getUsers();
                 let u = users.find(x => x.username === username);
                 
-                // History ko Approved karna
                 if(u.withdrawHistory && u.pendingWithdrawId) {
                     let historyItem = u.withdrawHistory.find(h => h.id === u.pendingWithdrawId);
-                    if(historyItem) historyItem.status = 'Approved';
+                    if(historyItem) historyItem.status = 'Completed'; // Set to Completed
                 }
 
                 u.withdrawRequested = false;
@@ -125,18 +124,17 @@
             }
         }
 
-        // UPDATED: Reject Withdraw (Refund & Update History)
+        // UPDATED: Reject Withdraw (Marks History as Refunded)
         function rejectWithdraw(username) {
-            if(confirm("Reject withdrawal and return balance to user?")) {
+            if(confirm("Reject withdrawal and return balance to user wallet?")) {
                 let users = getUsers();
                 let u = users.find(x => x.username === username);
                 
-                u.balance += u.withdrawAmount; // Paisa wapas de diya
+                u.balance += u.withdrawAmount; // Refund balance to user wallet
 
-                // History ko Rejected karna
                 if(u.withdrawHistory && u.pendingWithdrawId) {
                     let historyItem = u.withdrawHistory.find(h => h.id === u.pendingWithdrawId);
-                    if(historyItem) historyItem.status = 'Rejected';
+                    if(historyItem) historyItem.status = 'Refunded'; // Set to Refunded
                 }
 
                 u.withdrawRequested = false;
