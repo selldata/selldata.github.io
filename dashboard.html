@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dashboard</title>
+  <style>
+    body {font-family:Arial; background:#0f172a; color:white; margin:0;}
+    .top {padding:15px; text-align:center; background:#1e293b;}
+    .circle {
+      width:140px; height:140px; border-radius:50%;
+      background:#22c55e; display:flex; align-items:center;
+      justify-content:center; margin:50px auto; font-size:22px;
+      cursor:pointer;
+    }
+    .sidebar {
+      position:fixed; bottom:0; width:100%;
+      display:flex; justify-content:space-around;
+      background:#1e293b; padding:10px;
+    }
+    button {background:none; color:white; border:none;}
+    #popup {
+      position:fixed; top:0; left:0; width:100%; height:100%;
+      background:rgba(0,0,0,0.8); display:none;
+      justify-content:center; align-items:center;
+    }
+    .box {background:#111; padding:20px; border-radius:10px;}
+  </style>
+</head>
+
+<body>
+
+<div class="top">
+  <h2 id="name"></h2>
+  <p id="balance"></p>
+</div>
+
+<div class="circle" onclick="toggle()">START</div>
+
+<div class="sidebar">
+  <button onclick="go('wallet.html')">Wallet</button>
+  <button onclick="withdraw()">Balance</button>
+  <button onclick="go('profile.html')">Profile</button>
+</div>
+
+<!-- Popup -->
+<div id="popup">
+  <div class="box">
+    <h2>Buy Plan ₹299</h2>
+    <input id="utr" placeholder="Enter UTR"><br><br>
+    <button onclick="submitUTR()">Submit</button>
+  </div>
+</div>
+
+<script>
+let user=localStorage.getItem("currentUser");
+let data=JSON.parse(localStorage.getItem(user));
+let run=false, interval;
+
+function load(){
+  name.innerText="Hello "+data.name;
+  balance.innerText="Balance ₹"+data.balance;
+
+  setTimeout(()=>{
+    if(!data.plan){
+      popup.style.display="flex";
+    }
+  },30000);
+}
+load();
+
+function toggle(){
+  if(!data.plan) return alert("Buy plan first");
+  if(!data.verified) return alert("Wait admin approval");
+
+  run=!run;
+  if(run){
+    interval=setInterval(()=>{
+      data.balance+=3;
+      save(); load();
+    },5000);
+  } else clearInterval(interval);
+}
+
+function withdraw(){
+  if(data.balance>=10){
+    alert("Withdraw success (demo)");
+    data.balance=0;
+    save(); load();
+  } else alert("Min ₹10");
+}
+
+function submitUTR(){
+  data.plan=true;
+  data.verified=false;
+  save();
+  alert("Submitted");
+  popup.style.display="none";
+}
+
+function go(page){ window.location=page; }
+
+function save(){
+  localStorage.setItem(user, JSON.stringify(data));
+}
+</script>
+
+</body>
+</html>
