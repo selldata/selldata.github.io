@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin Panel</title>
+  <style>
+    body {font-family:Arial; background:#0f172a; color:white; padding:20px;}
+    .card {
+      background:#1e293b; padding:15px; margin:10px;
+      border-radius:10px;
+    }
+    button {
+      margin:5px; padding:8px;
+      border:none; border-radius:6px;
+      cursor:pointer;
+    }
+    .approve {background:green; color:white;}
+    .reject {background:red; color:white;}
+    .refund {background:orange; color:black;}
+  </style>
+</head>
+
+<body>
+
+<h1>Admin Panel</h1>
+<div id="users"></div>
+
+<script>
+function loadUsers(){
+  let container=document.getElementById("users");
+  container.innerHTML="";
+
+  for(let i=0;i<localStorage.length;i++){
+    let key=localStorage.key(i);
+
+    if(key==="currentUser") continue;
+
+    let data=JSON.parse(localStorage.getItem(key));
+
+    let div=document.createElement("div");
+    div.className="card";
+
+    div.innerHTML=`
+      <h3>${key}</h3>
+      <p>Name: ${data.name}</p>
+      <p>Balance: ₹${data.balance}</p>
+      <p>Plan: ${data.plan}</p>
+      <p>Verified: ${data.verified}</p>
+      <button class="approve" onclick="approve('${key}')">Approve Plan</button>
+      <button class="reject" onclick="reject('${key}')">Reject Plan</button>
+      <button class="approve" onclick="withdrawApprove('${key}')">Approve Withdraw</button>
+      <button class="reject" onclick="withdrawReject('${key}')">Reject Withdraw</button>
+      <button class="refund" onclick="refund('${key}')">Refund</button>
+    `;
+
+    container.appendChild(div);
+  }
+}
+
+function approve(user){
+  let d=JSON.parse(localStorage.getItem(user));
+  d.verified=true;
+  localStorage.setItem(user, JSON.stringify(d));
+  loadUsers();
+}
+
+function reject(user){
+  let d=JSON.parse(localStorage.getItem(user));
+  d.plan=false;
+  d.verified=false;
+  localStorage.setItem(user, JSON.stringify(d));
+  loadUsers();
+}
+
+function withdrawApprove(user){
+  let d=JSON.parse(localStorage.getItem(user));
+  d.balance=0;
+  localStorage.setItem(user, JSON.stringify(d));
+  alert("Withdraw Approved");
+  loadUsers();
+}
+
+function withdrawReject(user){
+  alert("Withdraw Rejected");
+}
+
+function refund(user){
+  let d=JSON.parse(localStorage.getItem(user));
+  d.balance+=299;
+  localStorage.setItem(user, JSON.stringify(d));
+  alert("Refund Done");
+  loadUsers();
+}
+
+loadUsers();
+</script>
+
+</body>
+</html>
