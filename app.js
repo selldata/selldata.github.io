@@ -24,7 +24,7 @@ function updateCurrentUser(updatedData) {
 }
 
 function requireAuth() {
-    if (!getCurrentUser()) window.location.href = 'login.html';
+    if (!getCurrentUser()) window.location.href = 'index.html';
 }
 
 // ==== YAHAN CHANGE KIYA GAYA HAI ====
