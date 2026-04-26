@@ -6,100 +6,181 @@
     <title>Admin Panel</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        .container { max-width: 600px; }
+        .container { max-width: 500px; margin-bottom: 50px; }
+        
+        /* 3 Options (Tabs) Design */
+        .tab-container {
+            display: flex;
+            background: var(--card);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 12px 5px;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .tab-btn.active-tab {
+            background: var(--primary);
+            color: white;
+        }
+        
+        /* Admin Card specific */
+        .admin-card { border-left: 4px solid var(--primary); }
+        .admin-card.plan-card { border-left-color: var(--warning); }
+        .admin-card.withdraw-card { border-left-color: var(--danger); }
+        .admin-card.completed-card { border-left-color: var(--success); }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>Admin Panel</h1>
-            <p>Manage Users & Approvals</p>
+            <p>Manage Approvals & Users</p>
         </div>
+
+        <!-- 3 Options Buttons -->
+        <div class="tab-container">
+            <button class="tab-btn active-tab" id="tab-plans" onclick="setTab('plans')">Pending Plans</button>
+            <button class="tab-btn" id="tab-withdraws" onclick="setTab('withdraws')">Pending Withdraws</button>
+            <button class="tab-btn" id="tab-completed" onclick="setTab('completed')">Completed / All</button>
+        </div>
+
+        <!-- User List Show Hogi Yahan -->
         <div id="usersList"></div>
     </div>
 
     <script src="app.js"></script>
     <script>
+        let currentTab = 'plans'; // Default tab
+
+        function setTab(tabName) {
+            currentTab = tabName;
+            
+            // Tab button colors change karna
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active-tab'));
+            document.getElementById('tab-' + tabName).classList.add('active-tab');
+            
+            loadAdminUI(); // Data refresh karna
+        }
+
         function loadAdminUI() {
             const users = getUsers();
             const list = document.getElementById('usersList');
             list.innerHTML = "";
 
-            if(users.length === 0) return list.innerHTML = "<p style='text-align:center;'>No registered users yet.</p>";
+            let filteredUsers = [];
 
-            users.forEach(u => {
-                let html = `
-                <div class="admin-card">
-                    <h3>${u.name} (@${u.username})</h3>
-                    <p>Balance: ₹${u.balance}</p>
-                    <p>Verified Plan: ${u.isVerified ? '<span style="color:var(--success)">Yes</span>' : '<span style="color:var(--danger)">No</span>'}</p>
-                    <div class="action-btns">
-                        <button class="btn btn-success" onclick="refund('${u.username}')">Refund +₹299</button>
-                    </div>`;
+            // 1. Pending Plans (Jisne pay kiya par approve nahi hua)
+            if (currentTab === 'plans') {
+                filteredUsers = users.filter(u => u.planRequested && !u.isVerified);
+            } 
+            // 2. Pending Withdraws (Jisne withdraw manga hai)
+            else if (currentTab === 'withdraws') {
+                filteredUsers = users.filter(u => u.withdrawRequested);
+            } 
+            // 3. Completed (Jis par action liya ja chuka hai ya koi pending request nahi hai)
+            else if (currentTab === 'completed') {
+                filteredUsers = users.filter(u => (!u.planRequested || u.isVerified) && !u.withdrawRequested);
+            }
 
-                if(u.planRequested && !u.isVerified) {
+            // Agar list khali ho
+            if(filteredUsers.length === 0) {
+                return list.innerHTML = `<p style='text-align:center; color:var(--text-muted); margin-top:30px;'>No data in this section.</p>`;
+            }
+
+            // Card Generate Karna
+            filteredUsers.forEach(u => {
+                let html = `<div class="admin-card ${currentTab}-card">
+                    <h3 style="margin-bottom: 8px;">${u.name} (@${u.username})</h3>
+                    <p><strong>Balance:</strong> ₹${u.balance}</p>`;
+
+                // Pending Plans view
+                if (currentTab === 'plans') {
                     html += `
-                    <div style="background:#334155; padding:10px; margin-top:10px; border-radius:5px;">
-                        <p style="color:var(--warning)">Pending Plan Approval</p>
-                        <p>UTR: ${u.planUtr}</p>
+                        <p style="color:var(--warning); margin-top:5px;">⏳ Waiting for Plan Approval</p>
+                        <p><strong>UTR Number:</strong> ${u.planUtr}</p>
                         <div class="action-btns">
                             <button class="btn btn-success" onclick="approvePlan('${u.username}')">Approve Plan</button>
                             <button class="btn btn-danger" onclick="rejectPlan('${u.username}')">Reject Plan</button>
-                        </div>
-                    </div>`;
-                }
-
-                if(u.withdrawRequested) {
+                        </div>`;
+                } 
+                // Pending Withdraws view
+                else if (currentTab === 'withdraws') {
                     html += `
-                    <div style="background:#334155; padding:10px; margin-top:10px; border-radius:5px;">
-                        <p style="color:var(--warning)">Pending Withdrawal</p>
-                        <p>Amount: ₹${u.withdrawAmount} | UPI: ${u.upiId}</p>
+                        <p style="color:var(--danger); margin-top:5px;">💸 Withdrawal Requested</p>
+                        <p><strong>Amount:</strong> ₹${u.withdrawAmount}</p>
+                        <p><strong>UPI ID:</strong> ${u.upiId}</p>
                         <div class="action-btns">
                             <button class="btn btn-success" onclick="approveWithdraw('${u.username}')">Approve Withdraw</button>
                             <button class="btn btn-danger" onclick="rejectWithdraw('${u.username}')">Reject Withdraw</button>
-                        </div>
-                    </div>`;
+                        </div>`;
+                } 
+                // Completed view
+                else if (currentTab === 'completed') {
+                    html += `
+                        <p><strong>Plan Status:</strong> ${u.isVerified ? '<span style="color:var(--success)">Verified ✅</span>' : '<span style="color:var(--danger)">Not Active ❌</span>'}</p>
+                        <div class="action-btns">
+                            <button class="btn btn-warning" onclick="refund('${u.username}')">Refund +₹299</button>
+                        </div>`;
                 }
-                
+
                 html += `</div>`;
                 list.innerHTML += html;
             });
         }
 
-        // Actions
+        // ====== Admin Actions ======
+
         function approvePlan(username) {
-            updateUserProp(username, { isVerified: true, planRequested: false });
+            if(confirm("Approve this plan?")) {
+                updateUserProp(username, { isVerified: true, planRequested: false });
+            }
         }
         
         function rejectPlan(username) {
-            updateUserProp(username, { planRequested: false, planUtr: "" });
+            if(confirm("Reject this plan?")) {
+                updateUserProp(username, { planRequested: false, planUtr: "" });
+            }
         }
 
         function approveWithdraw(username) {
-            // Balance already reset by user, just clear request
-            updateUserProp(username, { withdrawRequested: false, withdrawAmount: 0 });
+            if(confirm("Mark withdrawal as paid?")) {
+                updateUserProp(username, { withdrawRequested: false, withdrawAmount: 0 });
+            }
         }
 
         function rejectWithdraw(username) {
-            // Refund the deducted balance back
-            let users = getUsers();
-            let u = users.find(x => x.username === username);
-            u.balance += u.withdrawAmount;
-            u.withdrawRequested = false;
-            u.withdrawAmount = 0;
-            saveUsers(users);
-            loadAdminUI();
+            if(confirm("Reject withdrawal and return balance to user?")) {
+                let users = getUsers();
+                let u = users.find(x => x.username === username);
+                u.balance += u.withdrawAmount; // Refund amount back to balance
+                u.withdrawRequested = false;
+                u.withdrawAmount = 0;
+                saveUsers(users);
+                loadAdminUI();
+            }
         }
 
         function refund(username) {
-            let users = getUsers();
-            let u = users.find(x => x.username === username);
-            u.balance += 299;
-            saveUsers(users);
-            loadAdminUI();
-            alert("₹299 refunded to user balance.");
+            if(confirm("Add ₹299 to this user's balance?")) {
+                let users = getUsers();
+                let u = users.find(x => x.username === username);
+                u.balance += 299;
+                saveUsers(users);
+                loadAdminUI();
+                alert("₹299 added to user balance.");
+            }
         }
 
+        // Update database and refresh UI
         function updateUserProp(username, props) {
             let users = getUsers();
             let index = users.findIndex(u => u.username === username);
@@ -108,6 +189,7 @@
             loadAdminUI();
         }
 
+        // Start Panel
         loadAdminUI();
     </script>
 </body>
