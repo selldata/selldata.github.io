@@ -18,13 +18,11 @@
         </div>
 
         <p style="font-size: 13px; color: var(--text-muted); text-align: center; margin-bottom: 20px;">
-            Minimum withdrawal amount is ₹10. You must have a saved UPI ID in your wallet.
+            Minimum withdrawal is ₹10. Required UPI ID in wallet.
         </p>
 
-        <!-- Status Show Hoga Agar Request Pending Hai -->
         <div id="withdrawStatus" style="margin-bottom: 20px;"></div>
 
-        <!-- Withdraw Form -->
         <div id="withdrawForm">
             <div class="form-group">
                 <label>Enter Amount</label>
@@ -57,9 +55,7 @@
         let user = getCurrentUser();
         
         function loadUI() {
-            user = getCurrentUser(); // Get latest data
-            
-            // Puraane users ke liye history array banayein (Error se bachne ke liye)
+            user = getCurrentUser(); 
             if(!user.withdrawHistory) user.withdrawHistory = [];
 
             document.getElementById('balanceText').innerText = `₹${user.balance}`;
@@ -67,7 +63,6 @@
             const formDiv = document.getElementById('withdrawForm');
             const statusDiv = document.getElementById('withdrawStatus');
 
-            // Agar pending request hai
             if(user.withdrawRequested) {
                 formDiv.style.display = 'none';
                 statusDiv.innerHTML = `
@@ -81,21 +76,25 @@
                 document.getElementById('withdrawAmountInput').value = "";
             }
 
-            // History Load Karna
+            // Load History UI
             const historyList = document.getElementById('historyList');
             historyList.innerHTML = "";
             
             if(user.withdrawHistory.length === 0) {
                 historyList.innerHTML = "<p style='text-align:center; color:var(--text-muted); font-size: 14px;'>No history found.</p>";
             } else {
-                // Reverse karenge taaki latest history sabse upar dikhe
                 let reversedHistory = [...user.withdrawHistory].reverse();
                 reversedHistory.forEach(item => {
-                    let color = item.status === 'Approved' ? 'var(--success)' : 
-                                item.status === 'Rejected' ? 'var(--danger)' : 'var(--warning)';
+                    // Decide Colors and Icons
+                    let color = (item.status === 'Completed' || item.status === 'Approved') ? 'var(--success)' : 
+                                (item.status === 'Refunded' || item.status === 'Rejected') ? 'var(--danger)' : 'var(--warning)';
                     
-                    let icon = item.status === 'Approved' ? '✅' : 
-                               item.status === 'Rejected' ? '❌' : '⏳';
+                    let icon = (item.status === 'Completed' || item.status === 'Approved') ? '✅' : 
+                               (item.status === 'Refunded' || item.status === 'Rejected') ? '↩️' : '⏳';
+                    
+                    // Display Text
+                    let statusText = (item.status === 'Approved') ? 'Completed' : 
+                                     (item.status === 'Rejected') ? 'Refunded' : item.status;
 
                     historyList.innerHTML += `
                         <div style="background: var(--card); padding: 12px; margin-bottom: 10px; border-radius: 8px; border-left: 4px solid ${color}; display: flex; justify-content: space-between; align-items: center;">
@@ -104,7 +103,7 @@
                                 <p style="font-size:11px; color:var(--text-muted);">${item.date}</p>
                             </div>
                             <div style="color: ${color}; font-size: 13px; font-weight: 600; text-align: right;">
-                                ${icon} ${item.status}
+                                ${icon} ${statusText}
                             </div>
                         </div>
                     `;
@@ -124,17 +123,14 @@
             if(!requestedAmount || requestedAmount < 10) return alert("Minimum withdrawal amount is ₹10");
             if(requestedAmount > user.balance) return alert("Insufficient balance! You only have ₹" + user.balance);
 
-            // Naya History ID aur Date
             const historyId = Date.now();
             const dateStr = new Date().toLocaleString();
 
-            // Amount katna aur pending true karna
             user.balance -= requestedAmount;
             user.withdrawRequested = true;
             user.withdrawAmount = requestedAmount;
-            user.pendingWithdrawId = historyId; // Link karne ke liye
+            user.pendingWithdrawId = historyId; 
 
-            // History array me save karna
             user.withdrawHistory.push({
                 id: historyId,
                 amount: requestedAmount,
