@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Withdraw</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="balance-card">
+            <p>Available Balance</p>
+            <h2 id="balanceText">₹0</h2>
+        </div>
+
+        <p style="font-size: 14px; color: var(--text-muted); text-align: center; margin-bottom: 20px;">
+            Minimum withdrawal is ₹10. Requesting withdrawal resets your balance.
+        </p>
+
+        <button class="btn" onclick="requestWithdraw()">Withdraw All Balance</button>
+    </div>
+
+    <div class="bottom-nav">
+        <a href="dashboard.html">Dash</a>
+        <a href="wallet.html">Wallet</a>
+        <a href="balance.html" class="active">Withdraw</a>
+        <a href="profile.html">Profile</a>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        requireAuth();
+        let user = getCurrentUser();
+        
+        function loadUI() {
+            user = getCurrentUser();
+            document.getElementById('balanceText').innerText = `₹${user.balance}`;
+        }
+        loadUI();
+
+        function requestWithdraw() {
+            if(!user.upiId) return alert("Please add your UPI ID in the wallet first.");
+            if(user.withdrawRequested) return alert("You already have a pending withdrawal request.");
+            if(user.balance < 10) return alert("Minimum balance required is ₹10");
+
+            // Demo logic: Withdraw resets balance instantly and pends admin approval
+            user.withdrawRequested = true;
+            user.withdrawAmount = user.balance;
+            user.balance = 0;
+            
+            updateCurrentUser(user);
+            loadUI();
+            alert(`Withdrawal of ₹${user.withdrawAmount} requested! Waiting for admin approval.`);
+        }
+    </script>
+</body>
+</html>
