@@ -27,7 +27,8 @@ function requireAuth() {
     if (!getCurrentUser()) window.location.href = 'login.html';
 }
 
+// ==== YAHAN CHANGE KIYA GAYA HAI ====
 function logout() {
     localStorage.removeItem('currentUser');
-    window.location.href = 'login.html';
+    window.location.href = 'index.html'; // Pehle yahan 'login.html' tha, ab 'index.html' kar diya
 }
