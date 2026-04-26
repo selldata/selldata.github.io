@@ -1,98 +1,114 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Admin Panel</title>
-  <style>
-    body {font-family:Arial; background:#0f172a; color:white; padding:20px;}
-    .card {
-      background:#1e293b; padding:15px; margin:10px;
-      border-radius:10px;
-    }
-    button {
-      margin:5px; padding:8px;
-      border:none; border-radius:6px;
-      cursor:pointer;
-    }
-    .approve {background:green; color:white;}
-    .reject {background:red; color:white;}
-    .refund {background:orange; color:black;}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .container { max-width: 600px; }
+    </style>
 </head>
-
 <body>
+    <div class="container">
+        <div class="header">
+            <h1>Admin Panel</h1>
+            <p>Manage Users & Approvals</p>
+        </div>
+        <div id="usersList"></div>
+    </div>
 
-<h1>Admin Panel</h1>
-<div id="users"></div>
+    <script src="app.js"></script>
+    <script>
+        function loadAdminUI() {
+            const users = getUsers();
+            const list = document.getElementById('usersList');
+            list.innerHTML = "";
 
-<script>
-function loadUsers(){
-  let container=document.getElementById("users");
-  container.innerHTML="";
+            if(users.length === 0) return list.innerHTML = "<p style='text-align:center;'>No registered users yet.</p>";
 
-  for(let i=0;i<localStorage.length;i++){
-    let key=localStorage.key(i);
+            users.forEach(u => {
+                let html = `
+                <div class="admin-card">
+                    <h3>${u.name} (@${u.username})</h3>
+                    <p>Balance: ₹${u.balance}</p>
+                    <p>Verified Plan: ${u.isVerified ? '<span style="color:var(--success)">Yes</span>' : '<span style="color:var(--danger)">No</span>'}</p>
+                    <div class="action-btns">
+                        <button class="btn btn-success" onclick="refund('${u.username}')">Refund +₹299</button>
+                    </div>`;
 
-    if(key==="currentUser") continue;
+                if(u.planRequested && !u.isVerified) {
+                    html += `
+                    <div style="background:#334155; padding:10px; margin-top:10px; border-radius:5px;">
+                        <p style="color:var(--warning)">Pending Plan Approval</p>
+                        <p>UTR: ${u.planUtr}</p>
+                        <div class="action-btns">
+                            <button class="btn btn-success" onclick="approvePlan('${u.username}')">Approve Plan</button>
+                            <button class="btn btn-danger" onclick="rejectPlan('${u.username}')">Reject Plan</button>
+                        </div>
+                    </div>`;
+                }
 
-    let data=JSON.parse(localStorage.getItem(key));
+                if(u.withdrawRequested) {
+                    html += `
+                    <div style="background:#334155; padding:10px; margin-top:10px; border-radius:5px;">
+                        <p style="color:var(--warning)">Pending Withdrawal</p>
+                        <p>Amount: ₹${u.withdrawAmount} | UPI: ${u.upiId}</p>
+                        <div class="action-btns">
+                            <button class="btn btn-success" onclick="approveWithdraw('${u.username}')">Approve Withdraw</button>
+                            <button class="btn btn-danger" onclick="rejectWithdraw('${u.username}')">Reject Withdraw</button>
+                        </div>
+                    </div>`;
+                }
+                
+                html += `</div>`;
+                list.innerHTML += html;
+            });
+        }
 
-    let div=document.createElement("div");
-    div.className="card";
+        // Actions
+        function approvePlan(username) {
+            updateUserProp(username, { isVerified: true, planRequested: false });
+        }
+        
+        function rejectPlan(username) {
+            updateUserProp(username, { planRequested: false, planUtr: "" });
+        }
 
-    div.innerHTML=`
-      <h3>${key}</h3>
-      <p>Name: ${data.name}</p>
-      <p>Balance: ₹${data.balance}</p>
-      <p>Plan: ${data.plan}</p>
-      <p>Verified: ${data.verified}</p>
-      <button class="approve" onclick="approve('${key}')">Approve Plan</button>
-      <button class="reject" onclick="reject('${key}')">Reject Plan</button>
-      <button class="approve" onclick="withdrawApprove('${key}')">Approve Withdraw</button>
-      <button class="reject" onclick="withdrawReject('${key}')">Reject Withdraw</button>
-      <button class="refund" onclick="refund('${key}')">Refund</button>
-    `;
+        function approveWithdraw(username) {
+            // Balance already reset by user, just clear request
+            updateUserProp(username, { withdrawRequested: false, withdrawAmount: 0 });
+        }
 
-    container.appendChild(div);
-  }
-}
+        function rejectWithdraw(username) {
+            // Refund the deducted balance back
+            let users = getUsers();
+            let u = users.find(x => x.username === username);
+            u.balance += u.withdrawAmount;
+            u.withdrawRequested = false;
+            u.withdrawAmount = 0;
+            saveUsers(users);
+            loadAdminUI();
+        }
 
-function approve(user){
-  let d=JSON.parse(localStorage.getItem(user));
-  d.verified=true;
-  localStorage.setItem(user, JSON.stringify(d));
-  loadUsers();
-}
+        function refund(username) {
+            let users = getUsers();
+            let u = users.find(x => x.username === username);
+            u.balance += 299;
+            saveUsers(users);
+            loadAdminUI();
+            alert("₹299 refunded to user balance.");
+        }
 
-function reject(user){
-  let d=JSON.parse(localStorage.getItem(user));
-  d.plan=false;
-  d.verified=false;
-  localStorage.setItem(user, JSON.stringify(d));
-  loadUsers();
-}
+        function updateUserProp(username, props) {
+            let users = getUsers();
+            let index = users.findIndex(u => u.username === username);
+            users[index] = { ...users[index], ...props };
+            saveUsers(users);
+            loadAdminUI();
+        }
 
-function withdrawApprove(user){
-  let d=JSON.parse(localStorage.getItem(user));
-  d.balance=0;
-  localStorage.setItem(user, JSON.stringify(d));
-  alert("Withdraw Approved");
-  loadUsers();
-}
-
-function withdrawReject(user){
-  alert("Withdraw Rejected");
-}
-
-function refund(user){
-  let d=JSON.parse(localStorage.getItem(user));
-  d.balance+=299;
-  localStorage.setItem(user, JSON.stringify(d));
-  alert("Refund Done");
-  loadUsers();
-}
-
-loadUsers();
-</script>
-
+        loadAdminUI();
+    </script>
 </body>
 </html>
