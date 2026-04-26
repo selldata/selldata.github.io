@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Withdraw</title>
+    <title>Withdraw & History</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -32,6 +32,15 @@
             </div>
             <button class="btn" id="withdrawBtn" onclick="requestWithdraw()">Request Withdraw</button>
         </div>
+
+        <hr style="border: 1px solid #334155; margin: 30px 0;">
+
+        <!-- Withdrawal History Section -->
+        <div class="header" style="text-align: left; margin-bottom: 15px;">
+            <h3>Withdrawal History</h3>
+        </div>
+        <div id="historyList"></div>
+        <br><br>
     </div>
 
     <!-- Bottom Navigation -->
@@ -49,12 +58,16 @@
         
         function loadUI() {
             user = getCurrentUser(); // Get latest data
+            
+            // Puraane users ke liye history array banayein (Error se bachne ke liye)
+            if(!user.withdrawHistory) user.withdrawHistory = [];
+
             document.getElementById('balanceText').innerText = `₹${user.balance}`;
 
             const formDiv = document.getElementById('withdrawForm');
             const statusDiv = document.getElementById('withdrawStatus');
 
-            // Agar pehle se pending request hai, toh input chupa do
+            // Agar pending request hai
             if(user.withdrawRequested) {
                 formDiv.style.display = 'none';
                 statusDiv.innerHTML = `
@@ -65,42 +78,74 @@
             } else {
                 formDiv.style.display = 'block';
                 statusDiv.innerHTML = "";
-                document.getElementById('withdrawAmountInput').value = ""; // Clear input
+                document.getElementById('withdrawAmountInput').value = "";
+            }
+
+            // History Load Karna
+            const historyList = document.getElementById('historyList');
+            historyList.innerHTML = "";
+            
+            if(user.withdrawHistory.length === 0) {
+                historyList.innerHTML = "<p style='text-align:center; color:var(--text-muted); font-size: 14px;'>No history found.</p>";
+            } else {
+                // Reverse karenge taaki latest history sabse upar dikhe
+                let reversedHistory = [...user.withdrawHistory].reverse();
+                reversedHistory.forEach(item => {
+                    let color = item.status === 'Approved' ? 'var(--success)' : 
+                                item.status === 'Rejected' ? 'var(--danger)' : 'var(--warning)';
+                    
+                    let icon = item.status === 'Approved' ? '✅' : 
+                               item.status === 'Rejected' ? '❌' : '⏳';
+
+                    historyList.innerHTML += `
+                        <div style="background: var(--card); padding: 12px; margin-bottom: 10px; border-radius: 8px; border-left: 4px solid ${color}; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <h3 style="margin-bottom: 5px;">₹${item.amount}</h3>
+                                <p style="font-size:11px; color:var(--text-muted);">${item.date}</p>
+                            </div>
+                            <div style="color: ${color}; font-size: 13px; font-weight: 600; text-align: right;">
+                                ${icon} ${item.status}
+                            </div>
+                        </div>
+                    `;
+                });
             }
         }
         
-        // Page load hone par UI update karo
         loadUI();
 
         function requestWithdraw() {
-            // Checks
-            if(!user.upiId) {
-                return alert("Please add your UPI ID in the wallet first.");
-            }
-            if(user.withdrawRequested) {
-                return alert("You already have a pending withdrawal request.");
-            }
+            if(!user.upiId) return alert("Please add your UPI ID in the wallet first.");
+            if(user.withdrawRequested) return alert("You already have a pending withdrawal request.");
 
             const amountInput = document.getElementById('withdrawAmountInput').value.trim();
             const requestedAmount = Number(amountInput);
 
-            // Validations
-            if(!requestedAmount || requestedAmount < 10) {
-                return alert("Minimum withdrawal amount is ₹10");
-            }
-            if(requestedAmount > user.balance) {
-                return alert("Insufficient balance! You only have ₹" + user.balance);
-            }
+            if(!requestedAmount || requestedAmount < 10) return alert("Minimum withdrawal amount is ₹10");
+            if(requestedAmount > user.balance) return alert("Insufficient balance! You only have ₹" + user.balance);
 
-            // Processing: User ke balance se amount kaat lo aur pending me daal do
+            // Naya History ID aur Date
+            const historyId = Date.now();
+            const dateStr = new Date().toLocaleString();
+
+            // Amount katna aur pending true karna
             user.balance -= requestedAmount;
             user.withdrawRequested = true;
             user.withdrawAmount = requestedAmount;
+            user.pendingWithdrawId = historyId; // Link karne ke liye
+
+            // History array me save karna
+            user.withdrawHistory.push({
+                id: historyId,
+                amount: requestedAmount,
+                date: dateStr,
+                status: 'Pending'
+            });
             
             updateCurrentUser(user);
-            loadUI(); // UI Reload
+            loadUI();
             
-            alert(`Withdrawal of ₹${requestedAmount} requested successfully! Waiting for admin approval.`);
+            alert(`Withdrawal of ₹${requestedAmount} requested successfully!`);
         }
     </script>
 </body>
