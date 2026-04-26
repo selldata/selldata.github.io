@@ -1,0 +1,137 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+
+:root {
+    --bg: #0f172a;
+    --card: #1e293b;
+    --text: #f8fafc;
+    --text-muted: #94a3b8;
+    --primary: #3b82f6;
+    --success: #10b981;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+}
+
+body {
+    background-color: var(--bg);
+    color: var(--text);
+    padding-bottom: 70px; /* Space for bottom nav */
+}
+
+.container {
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Forms & Inputs */
+.form-group { margin-bottom: 15px; }
+label { display: block; margin-bottom: 5px; color: var(--text-muted); font-size: 14px; }
+input {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #334155;
+    background: var(--bg);
+    color: var(--text);
+    outline: none;
+}
+input:focus { border-color: var(--primary); }
+
+/* Buttons */
+.btn {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    border: none;
+    background: var(--primary);
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 10px;
+}
+.btn:hover { opacity: 0.9; }
+.btn-danger { background: var(--danger); }
+.btn-success { background: var(--success); }
+
+/* Bottom Navigation */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    background: var(--card);
+    display: flex;
+    justify-content: space-around;
+    padding: 15px 0;
+    border-top: 1px solid #334155;
+    max-width: 400px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+.bottom-nav a {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+}
+.bottom-nav a:hover, .bottom-nav a.active { color: var(--primary); }
+
+/* Dashboard UI */
+.header { text-align: center; margin-bottom: 30px; }
+.balance-card {
+    background: var(--card);
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+    margin-bottom: 40px;
+}
+.balance-card h2 { color: var(--success); font-size: 32px; }
+
+/* Center Circular Button */
+.circle-btn-container { display: flex; justify-content: center; margin: 40px 0; }
+.circle-btn {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    border: none;
+    background: var(--primary);
+    color: white;
+    font-size: 24px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+    transition: 0.3s;
+}
+.circle-btn.stop {
+    background: var(--danger);
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+}
+
+/* Modal / Popup */
+.modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.8);
+    display: none; justify-content: center; align-items: center; z-index: 1000;
+}
+.modal-content {
+    background: var(--card);
+    padding: 25px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 350px;
+    text-align: center;
+}
+
+/* Admin Cards */
+.admin-card {
+    background: var(--card); padding: 15px; border-radius: 8px; margin-bottom: 15px;
+}
+.admin-card p { margin-bottom: 5px; font-size: 14px; }
+.action-btns { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+.action-btns button { padding: 8px; font-size: 12px; flex: 1; }
