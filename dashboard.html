@@ -1,107 +1,107 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Dashboard</title>
-  <style>
-    body {font-family:Arial; background:#0f172a; color:white; margin:0;}
-    .top {padding:15px; text-align:center; background:#1e293b;}
-    .circle {
-      width:140px; height:140px; border-radius:50%;
-      background:#22c55e; display:flex; align-items:center;
-      justify-content:center; margin:50px auto; font-size:22px;
-      cursor:pointer;
-    }
-    .sidebar {
-      position:fixed; bottom:0; width:100%;
-      display:flex; justify-content:space-around;
-      background:#1e293b; padding:10px;
-    }
-    button {background:none; color:white; border:none;}
-    #popup {
-      position:fixed; top:0; left:0; width:100%; height:100%;
-      background:rgba(0,0,0,0.8); display:none;
-      justify-content:center; align-items:center;
-    }
-    .box {background:#111; padding:20px; border-radius:10px;}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
+    <div class="container">
+        <div class="header">
+            <h2 id="userNameText">Welcome</h2>
+            <p id="statusText" style="color: var(--warning); font-size: 14px;"></p>
+        </div>
 
-<div class="top">
-  <h2 id="name"></h2>
-  <p id="balance"></p>
-</div>
+        <div class="balance-card">
+            <p>Wallet Balance</p>
+            <h2 id="balanceText">₹0</h2>
+        </div>
 
-<div class="circle" onclick="toggle()">START</div>
+        <div class="circle-btn-container">
+            <button id="actionBtn" class="circle-btn" onclick="toggleEarning()">START</button>
+        </div>
+    </div>
 
-<div class="sidebar">
-  <button onclick="go('wallet.html')">Wallet</button>
-  <button onclick="withdraw()">Balance</button>
-  <button onclick="go('profile.html')">Profile</button>
-</div>
+    <!-- Buy Plan Popup -->
+    <div class="modal-overlay" id="planModal">
+        <div class="modal-content">
+            <h2>Buy Plan ₹299</h2>
+            <p style="font-size: 14px; margin-bottom: 15px; color: var(--text-muted);">Please pay ₹299 to UPI: demo@upi and submit the UTR number below.</p>
+            <input type="text" id="utrInput" placeholder="Enter UTR Number" style="margin-bottom: 15px;">
+            <button class="btn" onclick="submitPlan()">Submit Payment</button>
+        </div>
+    </div>
 
-<!-- Popup -->
-<div id="popup">
-  <div class="box">
-    <h2>Buy Plan ₹299</h2>
-    <input id="utr" placeholder="Enter UTR"><br><br>
-    <button onclick="submitUTR()">Submit</button>
-  </div>
-</div>
+    <div class="bottom-nav">
+        <a href="dashboard.html" class="active">Dash</a>
+        <a href="wallet.html">Wallet</a>
+        <a href="balance.html">Withdraw</a>
+        <a href="profile.html">Profile</a>
+    </div>
 
-<script>
-let user=localStorage.getItem("currentUser");
-let data=JSON.parse(localStorage.getItem(user));
-let run=false, interval;
+    <script src="app.js"></script>
+    <script>
+        requireAuth();
+        let user = getCurrentUser();
+        let earningInterval = null;
+        let isEarning = false;
 
-function load(){
-  name.innerText="Hello "+data.name;
-  balance.innerText="Balance ₹"+data.balance;
+        document.getElementById('userNameText').innerText = `Hello, ${user.name}`;
+        updateBalanceUI();
 
-  setTimeout(()=>{
-    if(!data.plan){
-      popup.style.display="flex";
-    }
-  },30000);
-}
-load();
+        if(user.planRequested && !user.isVerified) {
+            document.getElementById('statusText').innerText = "Status: Waiting for Admin Approval";
+        }
 
-function toggle(){
-  if(!data.plan) return alert("Buy plan first");
-  if(!data.verified) return alert("Wait admin approval");
+        // Show popup after 30 seconds if plan not bought
+        setTimeout(() => {
+            user = getCurrentUser(); // Refresh state
+            if(!user.planRequested && !user.isVerified) {
+                document.getElementById('planModal').style.display = 'flex';
+            }
+        }, 30000);
 
-  run=!run;
-  if(run){
-    interval=setInterval(()=>{
-      data.balance+=3;
-      save(); load();
-    },5000);
-  } else clearInterval(interval);
-}
+        function submitPlan() {
+            const utr = document.getElementById('utrInput').value.trim();
+            if(!utr) return alert("Enter UTR number");
+            user.planRequested = true;
+            user.planUtr = utr;
+            updateCurrentUser(user);
+            document.getElementById('planModal').style.display = 'none';
+            document.getElementById('statusText').innerText = "Status: Waiting for Admin Approval";
+            alert("UTR submitted. Waiting for admin approval.");
+        }
 
-function withdraw(){
-  if(data.balance>=10){
-    alert("Withdraw success (demo)");
-    data.balance=0;
-    save(); load();
-  } else alert("Min ₹10");
-}
+        function toggleEarning() {
+            user = getCurrentUser();
+            if(!user.isVerified) {
+                return alert("You must buy the ₹299 plan and get admin approval before earning.");
+            }
 
-function submitUTR(){
-  data.plan=true;
-  data.verified=false;
-  save();
-  alert("Submitted");
-  popup.style.display="none";
-}
+            const btn = document.getElementById('actionBtn');
+            if(!isEarning) {
+                // START EARNING
+                isEarning = true;
+                btn.innerText = "STOP";
+                btn.classList.add("stop");
+                earningInterval = setInterval(() => {
+                    user.balance += 3;
+                    updateCurrentUser(user);
+                    updateBalanceUI();
+                }, 5000);
+            } else {
+                // STOP EARNING
+                isEarning = false;
+                btn.innerText = "START";
+                btn.classList.remove("stop");
+                clearInterval(earningInterval);
+            }
+        }
 
-function go(page){ window.location=page; }
-
-function save(){
-  localStorage.setItem(user, JSON.stringify(data));
-}
-</script>
-
+        function updateBalanceUI() {
+            document.getElementById('balanceText').innerText = `₹${user.balance}`;
+        }
+    </script>
 </body>
 </html>
