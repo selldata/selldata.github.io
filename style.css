@@ -21,7 +21,7 @@
 body {
     background-color: var(--bg);
     color: var(--text);
-    padding-bottom: 70px; /* Space for bottom nav */
+    padding-bottom: 70px;
 }
 
 .container {
@@ -59,6 +59,7 @@ input:focus { border-color: var(--primary); }
 .btn:hover { opacity: 0.9; }
 .btn-danger { background: var(--danger); }
 .btn-success { background: var(--success); }
+.btn-warning { background: var(--warning); color: #000; } /* New warning button */
 
 /* Bottom Navigation */
 .bottom-nav {
@@ -83,18 +84,18 @@ input:focus { border-color: var(--primary); }
 .bottom-nav a:hover, .bottom-nav a.active { color: var(--primary); }
 
 /* Dashboard UI */
-.header { text-align: center; margin-bottom: 30px; }
+.header { text-align: center; margin-bottom: 20px; }
 .balance-card {
     background: var(--card);
     padding: 20px;
     border-radius: 12px;
     text-align: center;
-    margin-bottom: 40px;
+    margin-bottom: 30px;
 }
 .balance-card h2 { color: var(--success); font-size: 32px; }
 
 /* Center Circular Button */
-.circle-btn-container { display: flex; justify-content: center; margin: 40px 0; }
+.circle-btn-container { display: flex; justify-content: center; margin: 30px 0; }
 .circle-btn {
     width: 150px;
     height: 150px;
@@ -126,12 +127,28 @@ input:focus { border-color: var(--primary); }
     width: 90%;
     max-width: 350px;
     text-align: center;
+    position: relative;
+}
+.close-btn {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 24px;
+    cursor: pointer;
+    color: var(--text-muted);
+}
+.close-btn:hover { color: var(--danger); }
+.qr-code {
+    width: 200px;
+    height: 200px;
+    margin: 15px auto;
+    border-radius: 8px;
+    border: 3px solid var(--primary);
+    display: block;
 }
 
 /* Admin Cards */
-.admin-card {
-    background: var(--card); padding: 15px; border-radius: 8px; margin-bottom: 15px;
-}
+.admin-card { background: var(--card); padding: 15px; border-radius: 8px; margin-bottom: 15px; }
 .admin-card p { margin-bottom: 5px; font-size: 14px; }
 .action-btns { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
 .action-btns button { padding: 8px; font-size: 12px; flex: 1; }
