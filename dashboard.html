@@ -12,135 +12,132 @@
             <h2 id="userNameText">Welcome</h2>
             <p id="statusText" style="font-size: 14px; margin-top: 5px;"></p>
         </div>
-
         <!-- Buy Plan Button (Only visible if plan is not purchased) -->
-        <button id="buyPlanBtn" class="btn btn-warning" onclick="openPlanModal()" style="display: none; margin-bottom: 20px;">
-            🛒 Buy Plan ₹299
-        </button>
+    <button id="buyPlanBtn" class="btn btn-warning" onclick="openPlanModal()" style="display: none; margin-bottom: 20px;">
+        🛒 Buy Plan ₹299
+    </button>
 
-        <div class="balance-card">
-            <p>Wallet Balance</p>
-            <h2 id="balanceText">₹0</h2>
-        </div>
-
-        <div class="circle-btn-container">
-            <button id="actionBtn" class="circle-btn" onclick="toggleEarning()">START</button>
-        </div>
+    <div class="balance-card">
+        <p>Wallet Balance</p>
+        <h2 id="balanceText">₹0</h2>
     </div>
 
-    <!-- Buy Plan Popup Modal -->
-    <div class="modal-overlay" id="planModal">
-        <div class="modal-content">
-            <span class="close-btn" onclick="closePlanModal()">&times;</span>
-            <h2>Buy Plan ₹299</h2>
-            <p style="font-size: 14px; margin-top: 10px; color: var(--text-muted);">
-                Scan the QR code below and pay ₹299 to activate earning.
-            </p>
-            
-            <!-- ====== YAHAN APNA QR CODE LINK DAALEIN ====== -->
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=nishanton@fam&pn=data&am=299" alt="Payment QR" class="qr-code">
-            <!-- ============================================== -->
-
-            <input type="text" id="utrInput" placeholder="Enter 12-Digit UTR Number" style="margin-bottom: 15px;">
-            <button class="btn" onclick="submitPlan()">Submit Payment</button>
-        </div>
+    <div class="circle-btn-container">
+        <button id="actionBtn" class="circle-btn" onclick="toggleEarning()">START</button>
     </div>
+</div>
 
-    <div class="bottom-nav">
-        <a href="dashboard.html" class="active">Dash</a>
-        <a href="wallet.html">Wallet</a>
-        <a href="balance.html">Withdraw</a>
-        <a href="profile.html">Profile</a>
+<!-- Buy Plan Popup Modal -->
+<div class="modal-overlay" id="planModal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closePlanModal()">&times;</span>
+        <h2>Buy Plan ₹299</h2>
+        <p style="font-size: 14px; margin-top: 10px; color: var(--text-muted);">
+            Scan the QR code below and pay ₹299 to activate earning.
+        </p>
+        
+        <!-- ====== YAHAN APNA QR CODE LINK DAALEIN ====== -->
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=nishanton@fam&pn=data&am=299" alt="Payment QR" class="qr-code">
+        <!-- ============================================== -->
+
+        <input type="text" id="utrInput" placeholder="Enter 12-Digit UTR Number" style="margin-bottom: 15px;">
+        <button class="btn" onclick="submitPlan()">Submit Payment</button>
     </div>
+</div>
 
-    <script src="app.js"></script>
-    <script>
-        requireAuth();
-        let user = getCurrentUser();
-        let earningInterval = null;
-        let isEarning = false;
+<div class="bottom-nav">
+    <a href="dashboard.html" class="active">Dash</a>
+    <a href="wallet.html">Wallet</a>
+    <a href="balance.html">Withdraw</a>
+    <a href="profile.html">Profile</a>
+</div>
 
-        document.getElementById('userNameText').innerText = `Hello, ${user.name}`;
-        updateBalanceUI();
+<script src="app.js"></script>
+<script>
+    requireAuth();
+    let user = getCurrentUser();
+    let earningInterval = null;
+    let isEarning = false;
+
+    document.getElementById('userNameText').innerText = `Hello, ${user.name}`;
+    updateBalanceUI();
+    updatePlanStatusUI();
+
+    // UI Update Function
+    function updatePlanStatusUI() {
+        const statusText = document.getElementById('statusText');
+        const buyBtn = document.getElementById('buyPlanBtn');
+
+        if (user.isVerified) {
+            statusText.innerText = "Status: Verified ✅";
+            statusText.style.color = "var(--success)";
+            buyBtn.style.display = "none";
+        } else if (user.planRequested) {
+            statusText.innerText = "Status: Waiting for Admin Approval ⏳";
+            statusText.style.color = "var(--warning)";
+            buyBtn.style.display = "none";
+        } else {
+            statusText.innerText = "Status: Plan Not Activated ❌";
+            statusText.style.color = "var(--danger)";
+            buyBtn.style.display = "block";
+        }
+    }
+
+    // Modal Functions
+    function openPlanModal() {
+        document.getElementById('planModal').style.display = 'flex';
+    }
+
+    function closePlanModal() {
+        document.getElementById('planModal').style.display = 'none';
+    }
+
+    // Submit UTR
+    function submitPlan() {
+        const utr = document.getElementById('utrInput').value.trim();
+        if(!utr) return alert("Please enter UTR number!");
+        
+        user.planRequested = true;
+        user.planUtr = utr;
+        updateCurrentUser(user);
+        
+        closePlanModal();
         updatePlanStatusUI();
+        alert("UTR submitted successfully. Please wait for admin approval.");
+    }
 
-        // UI Update Function
-        function updatePlanStatusUI() {
-            const statusText = document.getElementById('statusText');
-            const buyBtn = document.getElementById('buyPlanBtn');
-
-            if (user.isVerified) {
-                statusText.innerText = "Status: Verified ✅";
-                statusText.style.color = "var(--success)";
-                buyBtn.style.display = "none";
-            } else if (user.planRequested) {
-                statusText.innerText = "Status: Waiting for Admin Approval ⏳";
-                statusText.style.color = "var(--warning)";
-                buyBtn.style.display = "none";
+    // Earning Function
+    function toggleEarning() {
+        user = getCurrentUser();
+        if(!user.isVerified) {
+            if(user.planRequested) {
+                return alert("Your payment is under review by the admin. Please wait.");
             } else {
-                statusText.innerText = "Status: Plan Not Activated ❌";
-                statusText.style.color = "var(--danger)";
-                buyBtn.style.display = "block";
+                return alert("You must buy the ₹299 plan to start earning!");
             }
         }
 
-        // Modal Functions
-        function openPlanModal() {
-            document.getElementById('planModal').style.display = 'flex';
+        const btn = document.getElementById('actionBtn');
+        if(!isEarning) {
+            // START EARNING
+            isEarning = true;
+            btn.innerText = "STOP";
+            btn.classList.add("stop");
+            earningInterval = setInterval(() => {
+                user.balance += 3;
+                updateCurrentUser(user);
+                updateBalanceUI();
+            }, 5000);
+        } else {
+            // STOP EARNING
+            isEarning = false;
+            btn.innerText = "START";
+            btn.classList.remove("stop");
+            clearInterval(earningInterval);
         }
+    }
 
-        function closePlanModal() {
-            document.getElementById('planModal').style.display = 'none';
-        }
-
-        // Submit UTR
-        function submitPlan() {
-            const utr = document.getElementById('utrInput').value.trim();
-            if(!utr) return alert("Please enter UTR number!");
-            
-            user.planRequested = true;
-            user.planUtr = utr;
-            updateCurrentUser(user);
-            
-            closePlanModal();
-            updatePlanStatusUI();
-            alert("UTR submitted successfully. Please wait for admin approval.");
-        }
-
-        // Earning Function
-        function toggleEarning() {
-            user = getCurrentUser();
-            if(!user.isVerified) {
-                if(user.planRequested) {
-                    return alert("Your payment is under review by the admin. Please wait.");
-                } else {
-                    return alert("You must buy the ₹299 plan to start earning!");
-                }
-            }
-
-            const btn = document.getElementById('actionBtn');
-            if(!isEarning) {
-                // START EARNING
-                isEarning = true;
-                btn.innerText = "STOP";
-                btn.classList.add("stop");
-                earningInterval = setInterval(() => {
-                    user.balance += 3;
-                    updateCurrentUser(user);
-                    updateBalanceUI();
-                }, 5000);
-            } else {
-                // STOP EARNING
-                isEarning = false;
-                btn.innerText = "START";
-                btn.classList.remove("stop");
-                clearInterval(earningInterval);
-            }
-        }
-
-        function updateBalanceUI() {
-            document.getElementById('balanceText').innerText = `₹${user.balance}`;
-        }
-    </script>
-</body>
-</html>
+    function updateBalanceUI() {
+        document.getElementById('balanceText').innerText = `₹${user.balance}`;
+    }
+</script>
